@@ -1,0 +1,55 @@
+table {
+    border: 1px solid black;
+    table-layout: fixed;
+}
+
+table.indicador-filas {
+  border: 1px solid rgba(0, 0, 0, 0);
+  margin: 0 20px;
+}
+
+table.indicator th, table.indicator td {
+    background-color: red;
+}
+
+th, td {
+    border: 1px solid black;
+    overflow: hidden;
+    width: 25px;
+}
+
+.seccion {
+
+}
+
+.table-wrapper {
+  display: flex;
+}
+
+.titulo-seccion {
+  display: block;
+  width: 100%;
+}
+
+.pop-modificar-reserva {
+  background-color: white;
+  border: 1px solid #999999;
+  cursor: default;
+  visibility: hidden;
+  margin-top: 15px;
+  position: absolute;
+  text-align: left;
+  z-index: 50;
+  padding: 25px 25px 20px;
+}
+
+label {
+  width: 150px;
+  cursor: text !important;
+}
+
+.reservada span {
+  display: block;
+  background-color: tomato;
+  color: white;
+}
