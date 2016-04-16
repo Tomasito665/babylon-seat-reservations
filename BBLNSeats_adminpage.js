@@ -7,9 +7,9 @@ input.css("color",defaultColor);}input.focus(clearMessage);input.blur(insertMess
 jQuery(document).ready(function() {
   jQuery('#form_actualizar-reserva').submit(function(event) {
   	var id = jQuery(this).attr('id_silla');
-  	var reservada = jQuery(this).find('input[name="reserva"]').is(':checked');
-    var nombre = jQuery(this).find('input[name="nombre"]').val();
-  	var popup = jQuery('.pop-modificar-reserva');
+  	var reserved = jQuery(this).find('input[name="reservation"]').is(':checked');
+    var name = jQuery(this).find('input[name="name"]').val();
+  	var popup = jQuery('.pop-change-reservation');
     var silla_elemento = jQuery('#'+id);
 
   	jQuery.ajax({
@@ -17,21 +17,21 @@ jQuery(document).ready(function() {
   		type: 'POST',
   		dataType: 'json',
   		data: {
-  			action: 'asientos_guardar_cambios',
+  			action: 'BBLNSeats_saveChanges',
   			id: id - 0,
-  			reservada: reservada ? 1 : 0,
-        nombre: nombre,
-        security: WP_JOB_LISTING.security
+  			reserved: reserved ? 1 : 0,
+			name: name,
+        	security: BBLN_SEATS.security
   		},
   		success: function(response) {
   			console.log("Success");
-        popup.css('visibility', 'hidden');
+			popup.css('visibility', 'hidden');
 
-        // Actualizar la interfaz
-        silla_elemento.toggleClass('reservada', reservada);
+			// Actualizar la interfaz
+			silla_elemento.toggleClass('reserved', reserved);
 
-        // Actualizar los datos del cliente
-        ASIENTOS_DATOS.data[id-1] = response.data[0];
+			// Actualizar los datos del cliente
+			BBLN_SEATS_DATA.data[id-1] = response.data[0];
   		},
   		error: function(error) {
   			console.log("Error");
@@ -41,28 +41,28 @@ jQuery(document).ready(function() {
   	event.preventDefault();
   });
 
-  jQuery('.pop-modificar-reserva input[name="nombre"]').Watermark("Nombre");
+  jQuery('.pop-change-reservation input[name="name"]').Watermark("name");
   jQuery('.silla').click(function(e) {
   	var id = this.id;
-  	var popup = jQuery('.pop-modificar-reserva');
-    var datos = ASIENTOS_DATOS.data[id-1];
+  	var popup = jQuery('.pop-change-reservation');
+    var datos = BBLN_SEATS_DATA.data[id-1];
 
   	popup.offset({
   		top: e.pageY,
   		left: e.pageX
   	});
 
-    popup.find('input[name="nombre"]').val(datos.nombre);
+    popup.find('input[name="name"]').val(datos.name);
 
     console.log(datos);
-    popup.find('input[name="reserva"]')[0].checked = datos.reservada - 0;
+    popup.find('input[name="reservation"]')[0].checked = datos.reserved - 0;
   	popup.find('form').attr('id_silla', id);
 
   	popup.css('visibility', 'visible');
   });
 
   jQuery(document).mousedown(function (e) {
-  	var container = jQuery('.pop-modificar-reserva');
+  	var container = jQuery('.pop-change-reservation');
 
   	if (!container.is(e.target) && container.has(e.target).length === 0)
   		container.css('visibility', 'hidden');
