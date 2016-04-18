@@ -36,8 +36,11 @@
                             $('#select-concert')
                                 .append($("<option></option>")
                                 .attr("value", concertName)
-                                .text(concertName))
-                                .val(currentConcertName);
+                                .text(concertName));
+                        }
+
+                        if (!!currentConcertName) {
+                            $('#select-concert').val(currentConcertName);
                         }
                     },
                     error: function(error) {
