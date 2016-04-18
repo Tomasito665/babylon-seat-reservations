@@ -21,7 +21,7 @@ if ( ! defined( 'ABSPATH' ) ) exit;
 
 // Load plugin class files
 require_once( 'includes/class-bblnseats.php' );
-require_once( 'includes/class-bblnseats-settings.php' );
+require_once('includes/class-bblnseats-reservations.php');
 
 // Load plugin libraries
 require_once( 'includes/lib/class-bblnseats-admin-api.php' );
@@ -38,7 +38,7 @@ function BBLNSeats () {
 	$instance = BBLNSeats::instance( __FILE__, '1.0.0' );
 
 	if ( is_null( $instance->settings ) ) {
-		$instance->settings = BBLNSeats_Settings::instance( $instance );
+		$instance->settings = BBLNSeats_Reservations::instance( $instance );
 	}
 
 	return $instance;

@@ -2,6 +2,12 @@
 
 if ( ! defined( 'ABSPATH' ) ) exit;
 
+class DatabaseType {
+    const SEATS     = 'seats';
+    const USERS     = 'users';
+    const CONCERTS  = 'concerts';
+}
+
 class BBLNSeats {
 
 	/**
@@ -273,19 +279,28 @@ class BBLNSeats {
         $charset_collate = $wpdb->get_charset_collate();
 
         // Create seats table
-        $seats_name = $this->database_prefix . 'seats';
+        $seats_name = $this->database_prefix . DatabaseType::SEATS;
         $seats_sql = "CREATE TABLE $seats_name (
-			id       smallint(5) NOT NULL AUTO_INCREMENT,
-			seat_no  smallint(5) NOT NULL,
-			user_id  smallint(5) NOT NULL,
-			concert  tinytext    NOT NULL,
+			id          smallint(5) NOT NULL AUTO_INCREMENT,
+			seat_no     smallint(5) NOT NULL,
+			user_id     smallint(5) NOT NULL,
+			concert_id  smallint(5) NOT NULL,
 			
 			UNIQUE KEY id (id)
 		) $charset_collate;";
 
         // Create users table
-        $users_name = $this->database_prefix . 'users';
+        $users_name = $this->database_prefix . DatabaseType::USERS;
         $users_sql = "CREATE TABLE $users_name (
+			id   smallint(5) NOT NULL AUTO_INCREMENT,
+			name tinytext    NOT NULL,
+			
+			UNIQUE KEY id (id)
+		) $charset_collate;";
+
+        // Create concerts table
+        $concerts_name = $this->database_prefix . DatabaseType::CONCERTS;
+        $concerts_sql = "CREATE TABLE $concerts_name (
 			id   smallint(5) NOT NULL AUTO_INCREMENT,
 			name tinytext    NOT NULL,
 			
@@ -296,6 +311,7 @@ class BBLNSeats {
         require_once(ABSPATH . 'wp-admin/includes/upgrade.php');
         dbDelta($seats_sql);
         dbDelta($users_sql);
+        dbDelta($concerts_sql);
 	} // End install ()
 
 	/**
@@ -307,5 +323,4 @@ class BBLNSeats {
 	private function _log_version_number () {
 		update_option( $this->_token . '_version', $this->_version );
 	} // End _log_version_number ()
-
 }
