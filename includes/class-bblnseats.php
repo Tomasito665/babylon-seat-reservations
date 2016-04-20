@@ -282,6 +282,8 @@ class BBLNSeats {
         $seats_name = $this->database_prefix . DatabaseType::SEATS;
         $seats_sql = "CREATE TABLE $seats_name (
 			id          smallint(5) NOT NULL AUTO_INCREMENT,
+			section     smallint(5) NOT NULL,
+			row         smallint(5) NOT NULL,
 			seat_no     smallint(5) NOT NULL,
 			user_id     smallint(5) NOT NULL,
 			concert_id  smallint(5) NOT NULL,

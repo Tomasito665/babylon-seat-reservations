@@ -291,9 +291,7 @@ class BBLNSeats_Reservations
         $html .= '<h2>' . __('Reservar Plazas', 'bblnseats') . '</h2>' . "\n";
 
         $html .= '<div id="toolbar">';
-            $html .= '<form id="form-select-concert" method="post">';
-            $html .= '<select id="select-concert" name="concert-name" onchange="this.form.submit()"></select>';
-            $html .= '</form>';
+            $html .= '<select id="select-concert" name="concert-name""></select>';
         $html .= '</div>';
 
         $html .= $this->createTableMap(
@@ -305,13 +303,8 @@ class BBLNSeats_Reservations
 
         echo $html;
 
-
-        $concertName = null;
-        if (isset($_POST['concert-name'])) $concertName = $_POST['concert-name'];
-
-
-        $this->updateConcertList($concertName);
-        $this->updateSeatsView($concertName);
+        $this->updateConcertList();
+        //$this->updateView();
     }
 
     /**
@@ -327,7 +320,7 @@ class BBLNSeats_Reservations
     public function createTableMap($label_list, $rows_list, $columns_list) {
         $html = '';
 
-        $createBlock = function ($rows, $odd, $columns) {
+        $createBlock = function ($rows, $odd, $columns, $sectionId = 0) {
             static $seatCount = 0;
 
             $html = "<table>";
@@ -339,7 +332,7 @@ class BBLNSeats_Reservations
                     $seat = $j * 2;
                     if ($odd) $seat--;
                     else $seat = (($columns + 1) * 2) - $seat;
-                    $html .= "<th id='" . ++$seatCount . "' class='seat'> <span>" . $seat . "</span></th>";
+                    $html .= "<th id='" . ++$seatCount . "' seat-no='" . $seat . "' row='" . $i . "' section='" . $sectionId . "' class='seat'> <span class='seat-no'>" . $seat . "</span></th>";
                 }
 
                 $html .= "</tr>";
@@ -364,12 +357,12 @@ class BBLNSeats_Reservations
 
         $i = 0;
         foreach ($label_list as $l) {
-            $html .= "<article class='seccion'>";
-            $html .= "<h3 class='titulo-seccion'>" . $l . "</h3>";
+            $html .= "<article class='section' section-id='$i'>";
+            $html .= "<h3 class='section-label'>" . $l . "</h3>";
             $html .= "<div class='table-wrapper'>";
-            $html .= $createBlock($rows_list[$i], false, $columns_list[$i]);
+            $html .= $createBlock($rows_list[$i], false, $columns_list[$i], $i);
             $html .= $createRowIndicator($rows_list[$i]);
-            $html .= $createBlock($rows_list[$i], true, $columns_list[$i]);
+            $html .= $createBlock($rows_list[$i], true, $columns_list[$i], $i);
             $html .= "</div>";
             $html .= "</article>";
             $i++;
@@ -378,14 +371,13 @@ class BBLNSeats_Reservations
         return $html;
     }
 
-    public function updateSeatsView($concert_name) {
-        if (is_null($concert_name)) return;
-        $updateDataStatement = 'window.BBLNSeats.getInstance().updateData("' . $concert_name . '");';
-        echo '<script>' . $updateDataStatement . '</script>';
-    }
+//    public function updateView() {
+//        $updateDataStatement = 'window.BBLNSeats.getInstance().updateData("' . $concert_name . '");';
+//        echo '<script>' . $updateDataStatement . '</script>';
+//    }
 
-    public function updateConcertList($concertName) {
-        $updateConcertList = 'window.BBLNSeats.getInstance().updateConcertList("' . $concertName . '");';
+    public function updateConcertList() {
+        $updateConcertList = 'window.BBLNSeats.getInstance().updateConcertList("");';
         echo '<script>' . $updateConcertList . '</script>';
     }
 
@@ -420,8 +412,7 @@ class BBLNSeats_Reservations
         $databasePrefix = BBLNSeats::instance()->database_prefix;
         $concertTable   = $databasePrefix . DatabaseType::CONCERTS;
         $data = $wpdb->get_results("SELECT * FROM $concertTable");
-        $currentConcert = 'null';
-        return wp_send_json_success(array($currentConcert, $data));
+        return wp_send_json_success($data);
     }
 
     /**
