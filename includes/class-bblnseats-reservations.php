@@ -58,6 +58,7 @@ class BBLNSeats_Reservations
         // Add ajax message handlers
         add_action('wp_ajax_bblnseats_getConcertData', array($this, 'getConcertData'));
         add_action('wp_ajax_bblnseats_getConcertList', array($this, 'getConcertList'));
+        add_action('wp_ajax_bblnseats_getUser', array($this, 'getUser'));
     }
 
     /**
@@ -299,6 +300,16 @@ class BBLNSeats_Reservations
             array(6, 11),
             array(13, 13)
         );
+
+        $html .= '
+        <div id="pop-change-reservation">
+            <form method="post" id="form_actualizar-reserva">
+                <input type="checkbox" name="reservation" value="reserved">Reservada</input><br>
+                <input type="text" size="30" name="name"/>
+                <input type="submit" value="Actualizar" name="commit" id="input_modificar_reserva"/>
+            </form>        
+        </div>';
+
         $html .= '</div>' . "\n";
 
         echo $html;
@@ -371,10 +382,15 @@ class BBLNSeats_Reservations
         return $html;
     }
 
-//    public function updateView() {
-//        $updateDataStatement = 'window.BBLNSeats.getInstance().updateData("' . $concert_name . '");';
-//        echo '<script>' . $updateDataStatement . '</script>';
-//    }
+    public function getUser() {
+        global $wpdb;
+        $userID         = $_POST['user_id'];
+        $databasePrefix = BBLNSeats::instance()->database_prefix;
+        $usersTable     = $databasePrefix . DatabaseType::USERS;
+
+        $user = $wpdb->get_results("SELECT * FROM $usersTable WHERE id=$userID");
+        return wp_send_json_success($user);
+    }
 
     public function updateConcertList() {
         $updateConcertList = 'window.BBLNSeats.getInstance().updateConcertList("");';
@@ -398,8 +414,9 @@ class BBLNSeats_Reservations
         if (is_null($concertId)) return wp_send_json_error("Concert named '" . $concertName . "' does not exist.");
         $concertId = (int) $concertId;
 
-        $data = $wpdb->get_results("SELECT * FROM $seatsTable WHERE concert_id=$concertId");
-        return wp_send_json_success($data);
+        // Get seats from database
+        $seats = $wpdb->get_results("SELECT * FROM $seatsTable WHERE concert_id=$concertId");
+        return wp_send_json_success($seats);
     }
 
     /**
