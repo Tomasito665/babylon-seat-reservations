@@ -7,7 +7,8 @@ module.exports = function( grunt ){
 		dirs: {
 			css: 'assets/css',
 			less: 'assets/css',
-			js: 'assets/js'
+			js: 'assets/js',
+			bootstrap: 'assets/bootstrap'
 		},
 
 		// Compile all .less files.
@@ -61,6 +62,18 @@ module.exports = function( grunt ){
 			}
 		},
 
+		// Copy bootstrap
+		copy: {
+			main: {
+				files: [{
+					expand: true,
+					cwd: 'node_modules/bootstrap/dist',
+					src: '**/*',
+					dest: 'assets/bootstrap'
+				}]
+			}
+		},
+
 		// Watch changes for assets
 		watch: {
 			less: {
@@ -85,9 +98,11 @@ module.exports = function( grunt ){
 	grunt.loadNpmTasks( 'grunt-contrib-cssmin' );
 	grunt.loadNpmTasks( 'grunt-contrib-uglify' );
 	grunt.loadNpmTasks( 'grunt-contrib-watch' );
+	grunt.loadNpmTasks( 'grunt-contrib-copy' );
 
 	// Register tasks
 	grunt.registerTask( 'default', [
+		'copy',
 		'less',
 		'cssmin',
 		'uglify'

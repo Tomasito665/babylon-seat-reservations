@@ -1,43 +1,66 @@
 #bblnseats_settings {
-  table {
-    border: 1px solid black;
-    table-layout: fixed;
-  }
+  font-family: Helvetica, Arial, sans-serif;
 
-  table.indicador-filas {
-    border: 1px solid rgba(0, 0, 0, 0);
-    margin: 0 20px;
-  }
+  #toolbar {
+    overflow: auto;
 
-  table.indicator th, table.indicator td {
-    background-color: red;
-  }
-
-  th, td {
-    border: 1px solid black;
-    overflow: hidden;
-    width: 25px;
+    & > * {
+      float: left;
+    }
   }
 
   .table-wrapper {
     display: flex;
   }
 
-  .section-label {
-    display: block;
-    width: 100%;
+  table {
+    border: 1px solid black;
+    table-layout: fixed;
+    border-collapse: separate;
+    border-spacing: 2px 2px;
+
+    &.indicador-filas {
+      border: 1px solid rgba(0, 0, 0, 0);
+      margin: 0 20px;
+    }
+
+    &.indicator {
+      th, td {
+        background-color: red;
+      }
+    }
+
+    th, td {
+      border: 1px solid black;
+      overflow: hidden;
+      width: 25px;
+      text-align: center;
+    }
   }
+
+
+  .section {
+    .section-label {
+      display: block;
+      width: 100%;
+    }
+  }
+
 
   #pop-change-reservation {
     background-color: white;
     border: 1px solid #999999;
     cursor: default;
     visibility: hidden;
-    margin-top: 15px;
     position: absolute;
     text-align: left;
     z-index: 50;
     padding: 25px 25px 20px;
+
+    label {
+      float: left;
+      clear: both;
+    }
   }
 
   label {
@@ -51,11 +74,30 @@
     color: white;
   }
 
-  #toolbar > * {
-    float: left;
-  }
+  #seat-context-menu {
+    display: none;
+    z-index: 1000;
+    position: absolute;
+    overflow: hidden;
+    border: 1px solid #CCC;
+    white-space: nowrap;
+    font-family: sans-serif;
+    background: #FFF;
+    color: #333;
+    border-radius: 5px;
+    margin: 0;
 
-  #toolbar {
-    overflow: auto;
+    li {
+      padding: 8px 12px;
+      cursor: pointer;
+
+      &:hover {
+        background-color: #DEF;
+      }
+
+      &.disabled {
+        display: none;
+      }
+    }
   }
 }

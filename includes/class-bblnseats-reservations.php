@@ -59,6 +59,12 @@ class BBLNSeats_Reservations
         add_action('wp_ajax_bblnseats_getConcertData', array($this, 'getConcertData'));
         add_action('wp_ajax_bblnseats_getConcertList', array($this, 'getConcertList'));
         add_action('wp_ajax_bblnseats_getUser', array($this, 'getUser'));
+        add_action('wp_ajax_bblnseats_saveToDb', array($this, 'saveToDb'));
+
+        // Load Bootstrap
+        $bootstrap_dir = $this->parent->assets_url . 'bootstrap';
+        wp_enqueue_style( $this->_token . '-bootstrap-css', $bootstrap_dir . '/css/bootstrap.min.css' );
+        wp_enqueue_script( $this->_token . '-bootstrap-js', $bootstrap_dir . '/js/bootstrap.min.js' );
     }
 
     /**
@@ -301,21 +307,18 @@ class BBLNSeats_Reservations
             array(13, 13)
         );
 
-        $html .= '
-        <div id="pop-change-reservation">
-            <form method="post" id="form_actualizar-reserva">
-                <input type="checkbox" name="reservation" value="reserved">Reservada</input><br>
-                <input type="text" size="30" name="name"/>
-                <input type="submit" value="Actualizar" name="commit" id="input_modificar_reserva"/>
-            </form>        
-        </div>';
-
+        // Adding seat context menu
+        $html .= "
+            <ul id='seat-context-menu'>
+              <li data-action='new' id='new'>Reservar</li>
+              <li data-action='open' id='open'>Abrir reserva</li>
+              <li data-action='delete' id='delete'>Cancelar Reserva</li>
+            </ul>
+        ";
         $html .= '</div>' . "\n";
-
         echo $html;
 
         $this->updateConcertList();
-        //$this->updateView();
     }
 
     /**
@@ -334,7 +337,7 @@ class BBLNSeats_Reservations
         $createBlock = function ($rows, $odd, $columns, $sectionId = 0) {
             static $seatCount = 0;
 
-            $html = "<table>";
+            $html = "<table class='concert-map'>";
 
             for ($i = 1; $i <= $rows; $i++) {
                 $html .= "<tr>";
@@ -369,7 +372,7 @@ class BBLNSeats_Reservations
         $i = 0;
         foreach ($label_list as $l) {
             $html .= "<article class='section' section-id='$i'>";
-            $html .= "<h3 class='section-label'>" . $l . "</h3>";
+            $html .= "<h3>" . $l . "</h3>";
             $html .= "<div class='table-wrapper'>";
             $html .= $createBlock($rows_list[$i], false, $columns_list[$i], $i);
             $html .= $createRowIndicator($rows_list[$i]);
@@ -380,6 +383,16 @@ class BBLNSeats_Reservations
         }
 
         return $html;
+    }
+
+    public function saveToDb() {
+        global $wpdb;
+        $databasePrefix = BBLNSeats::instance()->database_prefix;
+        $seatsTable     = $databasePrefix . DatabaseType::SEATS;
+        $usersTable     = $databasePrefix . DatabaseType::USERS;
+
+
+
     }
 
     public function getUser() {

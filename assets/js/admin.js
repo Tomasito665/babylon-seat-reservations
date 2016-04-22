@@ -8,7 +8,7 @@
                 SELECT_CONCERT:       '#select-concert',
                 CELL_SEAT:            '.seat',
                 SECTION:              '.section',
-                POPUP_EDIT_SEAT:      '#pop-change-reservation'
+                SEAT_CONTEXT_MENU:    '#seat-context-menu'
             },
 
             currentConcert: null,
@@ -48,9 +48,30 @@
                     },
                     success: function (response) {
                         var data = response.data;
+                        if (!!data) return;
                         if (data.length > 1)
                             throw new Error("getUser(), it looks like there is more than one user on this seat.. :o");
                         successCallback && successCallback(response.data[0]);
+                    },
+                    error: function (error) {
+                        console.log(error);
+                    }
+                });
+            },
+
+            // TODO Dit moet aangeroepen worden bij submit
+            saveToDb: function(reserved) {
+                $.ajax({
+                    url: ajaxurl,
+                    type: 'POST',
+                    dataType: 'json',
+                    data: {
+                        action:   'bblnseats_saveToDb',
+                        reserved: reserved,
+                        user_id:  userID
+                    },
+                    success: function (response) {
+
                     },
                     error: function (error) {
                         console.log(error);
@@ -75,6 +96,8 @@
                                 .attr("value", concertName)
                                 .text(concertName));
                         }
+
+                        me.updateConcertData();
                     },
                     error: function (error) {
                         console.log(error);
@@ -100,9 +123,11 @@
                 return null;
             },
 
-            openPopup: function (event) {
-                var popup            =  $(me.ELEMENTS.POPUP_EDIT_SEAT);
-                var nameInputElement =  popup.find('input[name="name"]');
+            openSeatContextMenu: function (event) {
+                var contextMenu = $(me.ELEMENTS.SEAT_CONTEXT_MENU);
+
+                // Avoid the real one
+                event.preventDefault();
 
                 var seat = me.getSeat(
                     $(this).attr('section'),
@@ -110,28 +135,40 @@
                     $(this).attr('seat-no')
                 );
 
-                // Reset fields
-                nameInputElement.val("");
+                var booked = !!seat;
 
-                // If there is a reservation on the clicked seat
-                if (!!seat) {
-                    me.getUser(seat.user_id, function(user) {
-                        nameInputElement.val(user.name);
-                    });
+                // Set menu options
+                var menuOptions = {
+                    new:    true,
+                    open:   false,
+                    delete: false
+                };
+
+                if (booked) {
+                    menuOptions.new    = false;
+                    menuOptions.open   = true;
+                    menuOptions.delete = true;
                 }
 
-                // Place the popup on the correct place and make the popup visible
-                popup.offset({
-                    top: event.pageY,
-                    left: event.pageX
-                });
-                popup.css('visibility', 'visible');
+                contextMenu.children('#new').toggleClass('disabled', !menuOptions.new);
+                contextMenu.children('#open').toggleClass('disabled', !menuOptions.open);
+                contextMenu.children('#delete').toggleClass('disabled', !menuOptions.delete);
+
+                // Show context menu
+                $(contextMenu)
+                    .finish()
+                    .toggle(100)
+                    .offset({
+                        top:  event.pageY,
+                        left: event.pageX
+                    });
             },
 
-            closePopup: function (event) {
-                var popup = $(me.ELEMENTS.POPUP_EDIT_SEAT);
-                if (!popup.is(event.target) && popup.has(event.target).length === 0)
-                    popup.css('visibility', 'hidden');
+            closeContextMenu: function(event) {
+                var container = $(me.ELEMENTS.SEAT_CONTEXT_MENU);
+
+                if (!container.is(event.target) && container.has(event.target).length === 0)
+                    container.hide();
             },
 
             _updateMap: function() {
@@ -153,8 +190,41 @@
 
         function createInstance() {
             $(document).on('change', me.ELEMENTS.SELECT_CONCERT, me.updateConcertData);
-            $(document).on('click', me.ELEMENTS.CELL_SEAT, me.openPopup);
-            $(document).on('mousedown', me.closePopup);
+            $(document).on('contextmenu', me.ELEMENTS.CELL_SEAT, me.openSeatContextMenu);
+
+            // Trigger action when the contexmenu is about to be shown
+            $(document).on("contextmenu", me.ELEMENTS.CELL_SEAT, function (event) {
+
+            });
+
+
+            // If the document is clicked somewhere
+            $(document).bind("mousedown", function (e) {
+
+                // If the clicked element is not the menu
+                if (!$(e.target).parents(me.ELEMENTS.SEAT_CONTEXT_MENU).length > 0) {
+
+                    // Hide it
+                    $(me.ELEMENTS.SEAT_CONTEXT_MENU).hide(100);
+                }
+            });
+
+
+            // If the menu element is clicked
+            $(".custom-menu li").click(function(){
+
+                // This is the triggered action name
+                switch($(this).attr("data-action")) {
+
+                    // A case for each action. Your actions here
+                    case "first": alert("first"); break;
+                    case "second": alert("second"); break;
+                    case "third": alert("third"); break;
+                }
+
+                // Hide it AFTER the action was triggered
+                $(".custom-menu").hide(100);
+            });
             return me;
         }
 
