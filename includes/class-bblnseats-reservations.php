@@ -59,7 +59,7 @@ class BBLNSeats_Reservations
         add_action('wp_ajax_bblnseats_getConcertData', array($this, 'getConcertData'));
         add_action('wp_ajax_bblnseats_getConcertList', array($this, 'getConcertList'));
         add_action('wp_ajax_bblnseats_getUser', array($this, 'getUser'));
-        add_action('wp_ajax_bblnseats_saveToDb', array($this, 'saveToDb'));
+        add_action('wp_ajax_bblnseats_newBookingToDb', array($this, 'newBookingToDb'));
 
         // Load Bootstrap
         $bootstrap_dir = $this->parent->assets_url . 'bootstrap';
@@ -334,14 +334,14 @@ class BBLNSeats_Reservations
                     </p>
                     <form>
                       <div class="form-group">
-                        <label for="name" class="control-label">Nombre:</label>
-                        <input type="text" class="form-control" id="name">
+                        <label for="modal-input-name" class="control-label">Nombre:</label>
+                        <input type="text" class="form-control" id="modal-input-name">
                       </div>
                     </form>
                   </div>
-                  <div class="modal-footer" id="footer">
+                  <div class="modal-footer" id="modal-footer">
                     <button type="button" class="btn btn-default" data-dismiss="modal">Cancelar</button>
-                    <button type="button" class="btn btn-primary">Reservar</button>
+                    <button type="button" class="btn btn-primary" id="modal-submit">Reservar</button>
                   </div>
                 </div>
               </div>
@@ -416,14 +416,37 @@ class BBLNSeats_Reservations
         return $html;
     }
 
-    public function saveToDb() {
+    public function newBookingToDb() {
         global $wpdb;
         $databasePrefix = BBLNSeats::instance()->database_prefix;
         $seatsTable     = $databasePrefix . DatabaseType::SEATS;
         $usersTable     = $databasePrefix . DatabaseType::USERS;
 
+        $concertID  = (int) $_POST['concert_id'];
+        $section    = (int) $_POST['section'];
+        $row        = (int) $_POST['row'];
+        $seatNo     = (int) $_POST['seat_no'];
 
+        $wpdb->insert($seatsTable,
+            array(
+                'section' => $section,
+                'row' => $row,
+                'seat_no' => $seatNo,
+                'user_id' => 1,
+                'concert_id' => $concertID,
+            ),
+            array('%d', '%d', '%d', '%d', '%d')
+        );
 
+        $seatRow = $wpdb->get_results("
+          SELECT * FROM $seatsTable 
+          WHERE section=$section
+          AND   row=$row
+          AND   seat_no=$seatNo
+          AND   user_id=1
+          AND   concert_id=$concertID");
+
+        return wp_send_json_success($seatRow);
     }
 
     public function getUser() {

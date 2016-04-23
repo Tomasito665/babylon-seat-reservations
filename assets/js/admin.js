@@ -49,7 +49,7 @@
                     },
                     success: function (response) {
                         var data = response.data;
-                        if (!!data) return;
+                        if (!data) return;
                         if (data.length > 1)
                             throw new Error("getUser(), it looks like there is more than one user on this seat.. :o");
                         successCallback && successCallback(response.data[0]);
@@ -61,18 +61,25 @@
             },
 
             // TODO Dit moet aangeroepen worden bij submit
-            saveToDb: function(reserved) {
+            newBookingToDb: function() {
+                var seat = $(me.ELEMENTS.BOOKING_MODAL).data('seat');
+                var concertID = $(me.ELEMENTS.SELECT_CONCERT + ' option:selected').data('concertID');
+
                 $.ajax({
                     url: ajaxurl,
                     type: 'POST',
                     dataType: 'json',
                     data: {
-                        action:   'bblnseats_saveToDb',
-                        reserved: reserved,
-                        user_id:  userID
+                        action:    'bblnseats_newBookingToDb',
+                        section:    seat.section,
+                        row:        seat.row,
+                        seat_no:    seat.seatNo,
+                        concert_id: concertID
                     },
                     success: function (response) {
-
+                        me.currentConcert.push(response.data[0]);
+                        me._resetMap();
+                        me._updateMap();
                     },
                     error: function (error) {
                         console.log(error);
@@ -91,11 +98,14 @@
 
                         for (var i = 0; i < data.length; i++) {
                             var concertName = data[i].name;
+                            var concertID   = data[i].id;
 
                             $(me.ELEMENTS.SELECT_CONCERT)
                                 .append($("<option></option>")
-                                .attr("value", concertName)
-                                .text(concertName));
+                                    .attr("value", concertName)
+                                    .text(concertName)
+                                    .data('concertID', concertID)
+                                );
                         }
 
                         me.updateConcertData();
@@ -160,6 +170,7 @@
                 );
 
                 contextMenu.data('seat', seat);
+                contextMenu.data('reservation', reservation);
 
                 var booked = !!reservation;
 
@@ -207,33 +218,42 @@
              * Click handler for clicking on a menu item of the context menu.
              */
             seatContextMenuClicked: function() {
-                switch ($(this).attr("data-action")) {
-                    case "new":
-                        break;
-                    case "open":
-                        break;
-                    case "delete":
-                        break;
-                }
+                // switch ($(this).attr("data-action")) {
+                //     case "new":
+                //         break;
+                //     case "open":
+                //         break;
+                //     case "delete":
+                //         break;
+                // }
 
                 $(me.ELEMENTS.SEAT_CONTEXT_MENU).hide(100);
             },
 
+            /**
+             * Click handler for opening the booking modal
+             * @param event
+             */
             openBookingModal: function(event) {
-                var seat    = $(me.ELEMENTS.SEAT_CONTEXT_MENU).data('seat');
-                var option  = $(event.relatedTarget); // Button that triggered the modal
-                var action  = option.data('action'); // Extract info from data-* attributes
+                var modal       = $(me.ELEMENTS.BOOKING_MODAL);
+                var option      = $(event.relatedTarget);
+                var action      = option.data('action');
 
-                var modal     = $(me.ELEMENTS.BOOKING_MODAL);
+                var seat        = $(me.ELEMENTS.SEAT_CONTEXT_MENU).data('seat');
+                var reservation = $(me.ELEMENTS.SEAT_CONTEXT_MENU).data('reservation');
+                var sectionName = $('.section[section-id="' + seat.section + '"] h3').html();
 
-                var title     =  modal.find('#booking-modal-title');
-                var nameInput =  modal.find('#name');
-                var footer    =  modal.find('#modal-footer');
+                var title       = modal.find('#booking-modal-title');
+                var nameInput   = modal.find('#modal-input-name');
+                var footer      = modal.find('#modal-footer');
+                var submitBtn   = modal.find('#modal-submit');
 
                 var modalVars = {
                     title: "",
                     editable: false,
-                    footer: false
+                    footer: false,
+                    name: "",
+                    submitText: ""
                 };
 
                 switch (action) {
@@ -241,34 +261,75 @@
                         modalVars.title = "Reservar nueva plaza";
                         modalVars.editable = true;
                         modalVars.footer = true;
+                        modalVars.name = "";
+                        modalVars.submitText = "Reservar";
                         break;
                     case "open":
                         modalVars.title = "Reserva";
                         modalVars.editable = false;
                         modalVars.footer = false;
+                        modalVars.name = "Cargando ...";
                         break;
                     case "delete":
-                        modalVars.title = "Cancelar reserva";
+                        modalVars.title = "Está seguro de que quiere cancelar la reserva?";
+                        modalVars.editable = false;
+                        modalVars.footer = true;
+                        modalVars.name = "";
+                        modalVars.submitText = "Aceptar";
                         break;
+                    default:
+                        console.log("No action named '" + action + "'");
+                        return;
                 }
 
+                // Massage the modal dom :)
                 title.html(modalVars.title);
                 nameInput.prop('disabled', !modalVars.editable);
+                nameInput.val(modalVars.name);
                 footer.css('display', modalVars.footer ? 'block' : 'none');
+                submitBtn.html(modalVars.submitText);
 
-                var sectionName = $('.section[section-id="' + seat.section + '"] h3').html();
 
                 // Set seat
                 modal.find('#modal-section-label').html(sectionName);
                 modal.find('#modal-row-label').html(seat.row);
                 modal.find('#modal-seat_no-label').html(seat.seatNo);
 
+                // Set data that has to be loaded from the server
+                if (action === "open" || action === "delete") {
+                    me.getUser(reservation.user_id, function(data) {
+                        modal.find('#modal-input-name').val(data.name);
+                        nameInput.prop('disabled', !modalVars.editable);
+                    });
+                }
 
-                // // If necessary, you could initiate an AJAX request here (and then do the updating in a callback).
-                // // Update the modal's content. We'll use jQuery here, but you could use a data binding library or other methods instead.
-                // var modal = $(this);
-                // modal.find('.modal-title').text('New message to ' + recipient);
-                // modal.find('.modal-body input').val(recipient);
+                // Set submit action
+                $(modal).data('action', action);
+
+                // Set current seat to modal
+                $(modal).data('seat', seat);
+            },
+
+            bookingModalSubmit: function() {
+                var modal       = $(me.ELEMENTS.BOOKING_MODAL);
+                var action      = modal.data("action");
+
+                switch (action) {
+                    case "new":
+                        me.newBookingToDb();
+                        break;
+                    case "open":
+                        console.log("I think you just pushed a button that does not exist ;)");
+                        break;
+                    case "delete":
+                        alert("delete");
+                        break;
+                    default:
+                        console.log("No action named '" + action + "'");
+                        return;
+                }
+
+                modal.modal('toggle');
             }
         }; // End me
 
@@ -281,8 +342,9 @@
             $(document).on('mousedown', me.closeSeatContextMenu);
             $(document).on('click', me.ELEMENTS.SEAT_CONTEXT_MENU + ' li', me.seatContextMenuClicked);
 
-            // Event handler for when the booking modal shows up
+            // Event handlers for the booking modal
             $(me.ELEMENTS.BOOKING_MODAL).on('show.bs.modal', me.openBookingModal);
+            $(me.ELEMENTS.BOOKING_MODAL + ' #modal-submit').click(me.bookingModalSubmit);
 
             return me;
         }
