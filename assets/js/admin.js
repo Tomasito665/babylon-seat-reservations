@@ -29,7 +29,8 @@
                     success: function (response) {
                         me.currentConcert = response.data;
                         console.log(response.data);
-                        me._resetMap();
+
+                        me._resetMap();  // TODO Is this necessary?
                         me._updateMap();
                     },
                     error: function (error) {
@@ -64,6 +65,7 @@
             newBookingToDb: function() {
                 var seat = $(me.ELEMENTS.BOOKING_MODAL).data('seat');
                 var concertID = $(me.ELEMENTS.SELECT_CONCERT + ' option:selected').data('concertID');
+                var user = $(me.ELEMENTS.BOOKING_MODAL).data('user');
 
                 $.ajax({
                     url: ajaxurl,
@@ -74,7 +76,8 @@
                         section:    seat.section,
                         row:        seat.row,
                         seat_no:    seat.seatNo,
-                        concert_id: concertID
+                        concert_id: concertID,
+                        user_name:  user.name
                     },
                     success: function (response) {
                         me.currentConcert.push(response.data[0]);
@@ -303,6 +306,9 @@
                     });
                 }
 
+                // Reset any potential previous user data
+                modal.data('user', null);
+
                 // Set submit action
                 $(modal).data('action', action);
 
@@ -313,6 +319,12 @@
             bookingModalSubmit: function() {
                 var modal       = $(me.ELEMENTS.BOOKING_MODAL);
                 var action      = modal.data("action");
+
+                var user = {
+                    name:  modal.find('#modal-input-name').val()
+                };
+
+                modal.data('user', user);
 
                 switch (action) {
                     case "new":

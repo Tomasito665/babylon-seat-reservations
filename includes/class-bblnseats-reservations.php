@@ -422,6 +422,17 @@ class BBLNSeats_Reservations
         $seatsTable     = $databasePrefix . DatabaseType::SEATS;
         $usersTable     = $databasePrefix . DatabaseType::USERS;
 
+        // Add new user to database
+        $userName = $_POST['user_name'];
+
+        $wpdb->insert($usersTable,
+            array('name' => $userName),
+            array('%s')
+        );
+
+        $userID = $wpdb->get_var("SELECT id FROM $usersTable ORDER BY id DESC LIMIT 0, 1");
+
+        // Add new booking to database
         $concertID  = (int) $_POST['concert_id'];
         $section    = (int) $_POST['section'];
         $row        = (int) $_POST['row'];
@@ -432,7 +443,7 @@ class BBLNSeats_Reservations
                 'section' => $section,
                 'row' => $row,
                 'seat_no' => $seatNo,
-                'user_id' => 1,
+                'user_id' => $userID,
                 'concert_id' => $concertID,
             ),
             array('%d', '%d', '%d', '%d', '%d')
@@ -443,7 +454,7 @@ class BBLNSeats_Reservations
           WHERE section=$section
           AND   row=$row
           AND   seat_no=$seatNo
-          AND   user_id=1
+          AND   user_id=$userID
           AND   concert_id=$concertID");
 
         return wp_send_json_success($seatRow);
