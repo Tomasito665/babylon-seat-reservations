@@ -310,14 +310,45 @@ class BBLNSeats_Reservations
         // Adding seat context menu
         $html .= "
             <ul id='seat-context-menu'>
-              <li data-action='new' id='new'>Reservar</li>
-              <li data-action='open' id='open'>Abrir reserva</li>
-              <li data-action='delete' id='delete'>Cancelar Reserva</li>
+              <li data-action='new' id='new' data-toggle='modal' data-target='#booking-modal'>Reservar</li>
+              <li data-action='open' id='open' data-toggle='modal' data-target='#booking-modal'>Abrir reserva</li>
+              <li data-action='delete' id='delete' data-toggle='modal' data-target='#booking-modal'>Cancelar Reserva</li>
             </ul>
         ";
         $html .= '</div>' . "\n";
-        echo $html;
 
+        // Adding booking modal
+        $html .= '
+            <div class="modal fade" id="booking-modal" tabindex="-1" role="dialog" aria-labelledby="booking-modal-title">
+              <div class="modal-dialog" role="document">
+                <div class="modal-content">
+                  <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                    <h4 class="modal-title" id="booking-modal-title">Reservar Plaza</h4>
+                  </div>
+                  <div class="modal-body">
+                    <p>
+                        <span class="modal-seat-label">Seccion:</span> <span id="modal-section-label">seccion</span><br>
+                        <span class="modal-seat-label">Fila:</span>    <span id="modal-row-label">fila</span><br>
+                        <span class="modal-seat-label">Silla:</span>   <span id="modal-seat_no-label">silla</span><br>
+                    </p>
+                    <form>
+                      <div class="form-group">
+                        <label for="name" class="control-label">Nombre:</label>
+                        <input type="text" class="form-control" id="name">
+                      </div>
+                    </form>
+                  </div>
+                  <div class="modal-footer" id="footer">
+                    <button type="button" class="btn btn-default" data-dismiss="modal">Cancelar</button>
+                    <button type="button" class="btn btn-primary">Reservar</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+        ';
+
+        echo $html;
         $this->updateConcertList();
     }
 

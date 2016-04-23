@@ -8,13 +8,14 @@
                 SELECT_CONCERT:       '#select-concert',
                 CELL_SEAT:            '.seat',
                 SECTION:              '.section',
-                SEAT_CONTEXT_MENU:    '#seat-context-menu'
+                SEAT_CONTEXT_MENU:    '#seat-context-menu',
+                BOOKING_MODAL:        '#booking-modal'
             },
 
             currentConcert: null,
 
             updateConcertData: function () {
-                var concertName = me.getConcertName();
+                var concertName = $(me.ELEMENTS.SELECT_CONCERT).val();
                 console.log("Getting data of '" + concertName + "'");
 
                 $.ajax({
@@ -105,11 +106,7 @@
                 });
             },
 
-            getConcertName: function () {
-                return $(me.ELEMENTS.SELECT_CONCERT).val();
-            },
-
-            getSeat: function(section, row, seat_no) {
+            getReservation: function(section, row, seat_no) {
                 var currentConcert = me.currentConcert;
 
                 for (var i = 0; i < currentConcert.length; i++) {
@@ -123,19 +120,48 @@
                 return null;
             },
 
+            _updateMap: function() {
+                for (var i = 0; i < me.currentConcert.length; i++) {
+                    var seat = me.currentConcert[i];
+
+                    $(me.ELEMENTS.CELL_SEAT +
+                        '[section="' + seat.section + '"]' +
+                        '[row="'     + seat.row     + '"]' +
+                        '[seat-no="' + seat.seat_no + '"]')
+                        .toggleClass('reserved', true);
+                }
+            },
+
+            _resetMap: function() {
+                $(me.ELEMENTS.CELL_SEAT).toggleClass('reserved', false);
+            },
+
+
+            /**
+             * Open the seat context menu.
+             * @param event - Only applicable if function used as event handler
+             */
             openSeatContextMenu: function (event) {
+                // If event is given, avoid the real context menu
+                !!event && event.preventDefault();
+
                 var contextMenu = $(me.ELEMENTS.SEAT_CONTEXT_MENU);
 
-                // Avoid the real one
-                event.preventDefault();
+                var seat = {
+                    section: $(this).attr('section'),
+                    row: $(this).attr('row'),
+                    seatNo: $(this).attr('seat-no')
+                };
 
-                var seat = me.getSeat(
-                    $(this).attr('section'),
-                    $(this).attr('row'),
-                    $(this).attr('seat-no')
+                var reservation = me.getReservation(
+                    seat.section,
+                    seat.row,
+                    seat.seatNo
                 );
 
-                var booked = !!seat;
+                contextMenu.data('seat', seat);
+
+                var booked = !!reservation;
 
                 // Set menu options
                 var menuOptions = {
@@ -164,67 +190,100 @@
                     });
             },
 
-            closeContextMenu: function(event) {
-                var container = $(me.ELEMENTS.SEAT_CONTEXT_MENU);
-
-                if (!container.is(event.target) && container.has(event.target).length === 0)
-                    container.hide();
-            },
-
-            _updateMap: function() {
-                for (var i = 0; i < me.currentConcert.length; i++) {
-                    var seat = me.currentConcert[i];
-
-                    $(me.ELEMENTS.CELL_SEAT +
-                        '[section="' + seat.section + '"]' +
-                        '[row="'     + seat.row     + '"]' +
-                        '[seat-no="' + seat.seat_no + '"]')
-                        .toggleClass('reserved', true);
-                }
-            },
-
-            _resetMap: function() {
-                $(me.ELEMENTS.CELL_SEAT).toggleClass('reserved', false);
-            }
-        }; // End me
-
-        function createInstance() {
-            $(document).on('change', me.ELEMENTS.SELECT_CONCERT, me.updateConcertData);
-            $(document).on('contextmenu', me.ELEMENTS.CELL_SEAT, me.openSeatContextMenu);
-
-            // Trigger action when the contexmenu is about to be shown
-            $(document).on("contextmenu", me.ELEMENTS.CELL_SEAT, function (event) {
-
-            });
-
-
-            // If the document is clicked somewhere
-            $(document).bind("mousedown", function (e) {
-
+            /**
+             * Close the context menu if clicked outside of the menu.
+             * @param event - Click event
+             */
+            closeSeatContextMenu: function(event) {
                 // If the clicked element is not the menu
-                if (!$(e.target).parents(me.ELEMENTS.SEAT_CONTEXT_MENU).length > 0) {
+                if (!$(event.target).parents(me.ELEMENTS.SEAT_CONTEXT_MENU).length > 0) {
 
                     // Hide it
                     $(me.ELEMENTS.SEAT_CONTEXT_MENU).hide(100);
                 }
-            });
+            },
 
-
-            // If the menu element is clicked
-            $(".custom-menu li").click(function(){
-
-                // This is the triggered action name
-                switch($(this).attr("data-action")) {
-
-                    // A case for each action. Your actions here
-                    case "first": alert("first"); break;
-                    case "second": alert("second"); break;
-                    case "third": alert("third"); break;
+            /**
+             * Click handler for clicking on a menu item of the context menu.
+             */
+            seatContextMenuClicked: function() {
+                switch ($(this).attr("data-action")) {
+                    case "new":
+                        break;
+                    case "open":
+                        break;
+                    case "delete":
+                        break;
                 }
 
-                // Hide it AFTER the action was triggered
-                $(".custom-menu").hide(100);
-            });
+                $(me.ELEMENTS.SEAT_CONTEXT_MENU).hide(100);
+            },
+
+            openBookingModal: function(event) {
+                var seat    = $(me.ELEMENTS.SEAT_CONTEXT_MENU).data('seat');
+                var option  = $(event.relatedTarget); // Button that triggered the modal
+                var action  = option.data('action'); // Extract info from data-* attributes
+
+                var modal     = $(me.ELEMENTS.BOOKING_MODAL);
+
+                var title     =  modal.find('#booking-modal-title');
+                var nameInput =  modal.find('#name');
+                var footer    =  modal.find('#modal-footer');
+
+                var modalVars = {
+                    title: "",
+                    editable: false,
+                    footer: false
+                };
+
+                switch (action) {
+                    case "new":
+                        modalVars.title = "Reservar nueva plaza";
+                        modalVars.editable = true;
+                        modalVars.footer = true;
+                        break;
+                    case "open":
+                        modalVars.title = "Reserva";
+                        modalVars.editable = false;
+                        modalVars.footer = false;
+                        break;
+                    case "delete":
+                        modalVars.title = "Cancelar reserva";
+                        break;
+                }
+
+                title.html(modalVars.title);
+                nameInput.prop('disabled', !modalVars.editable);
+                footer.css('display', modalVars.footer ? 'block' : 'none');
+
+                var sectionName = $('.section[section-id="' + seat.section + '"] h3').html();
+
+                // Set seat
+                modal.find('#modal-section-label').html(sectionName);
+                modal.find('#modal-row-label').html(seat.row);
+                modal.find('#modal-seat_no-label').html(seat.seatNo);
+
+
+                // // If necessary, you could initiate an AJAX request here (and then do the updating in a callback).
+                // // Update the modal's content. We'll use jQuery here, but you could use a data binding library or other methods instead.
+                // var modal = $(this);
+                // modal.find('.modal-title').text('New message to ' + recipient);
+                // modal.find('.modal-body input').val(recipient);
+            }
+        }; // End me
+
+        function createInstance() {
+            // Event handler for the concert drop down menu
+            $(document).on('change', me.ELEMENTS.SELECT_CONCERT, me.updateConcertData);
+
+            // Event handlers for the context menu
+            $(document).on('contextmenu', me.ELEMENTS.CELL_SEAT, me.openSeatContextMenu);
+            $(document).on('mousedown', me.closeSeatContextMenu);
+            $(document).on('click', me.ELEMENTS.SEAT_CONTEXT_MENU + ' li', me.seatContextMenuClicked);
+
+            // Event handler for when the booking modal shows up
+            $(me.ELEMENTS.BOOKING_MODAL).on('show.bs.modal', me.openBookingModal);
+
             return me;
         }
 
