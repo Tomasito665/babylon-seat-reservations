@@ -111,6 +111,11 @@
                                 );
                         }
 
+                        // Select the first non-placeholder option
+                        if (data.length >= 1)  {
+                            $(me.ELEMENTS.SELECT_CONCERT + ' option:nth-child(2)').attr('selected', 'selected');
+                        }
+
                         me.updateConcertData();
                     },
                     error: function (error) {

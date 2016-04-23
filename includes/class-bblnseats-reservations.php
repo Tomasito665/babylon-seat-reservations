@@ -298,7 +298,10 @@ class BBLNSeats_Reservations
         $html .= '<h2>' . __('Reservar Plazas', 'bblnseats') . '</h2>' . "\n";
 
         $html .= '<div id="toolbar">';
-            $html .= '<select id="select-concert" name="concert-name""></select>';
+            $html .= '
+            <select id="select-concert" name="concert-name" placeholder="Concierto">
+                <option value="" disabled selected>Selecciona un concierto</option>
+            </select>';
         $html .= '</div>';
 
         $html .= $this->createTableMap(
