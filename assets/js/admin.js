@@ -63,8 +63,8 @@
 
             // TODO Dit moet aangeroepen worden bij submit
             newBookingToDb: function() {
-                var seat = $(me.ELEMENTS.BOOKING_MODAL).data('seat');
                 var concertID = $(me.ELEMENTS.SELECT_CONCERT + ' option:selected').data('concertID');
+                var seat = $(me.ELEMENTS.BOOKING_MODAL).data('seat');
                 var user = $(me.ELEMENTS.BOOKING_MODAL).data('user');
 
                 $.ajax({
@@ -85,6 +85,45 @@
                         me._updateMap();
                     },
                     error: function (error) {
+                        console.log(error);
+                    }
+                });
+            },
+
+            deleteBooking: function() {
+                var concertID = $(me.ELEMENTS.SELECT_CONCERT + ' option:selected').data('concertID');
+                var seat = $(me.ELEMENTS.BOOKING_MODAL).data('seat');
+                var user = $(me.ELEMENTS.BOOKING_MODAL).data('user');
+
+                $.ajax({
+                    url: ajaxurl,
+                    type: 'POST',
+                    dataType: 'json',
+                    data: {
+                        action: 'bblnseats_deleteBooking',
+                        section:    seat.section,
+                        row:        seat.row,
+                        seat_no:    seat.seatNo,
+                        concert_id: concertID,
+                        user_name:  user.name
+                    },
+                    success: function(response) {
+                        var bookingID = response.data;
+                        if (bookingID < 0) return;
+
+                        var booking = me.currentConcert.filter(function(obj) {
+                            return obj.id == bookingID;
+                        })[0];
+
+                        var bookingIndex = me.currentConcert.indexOf(booking);
+                        if (bookingIndex > -1) {
+                            me.currentConcert.splice(bookingIndex, 1);
+                        }
+
+                        me._resetMap();
+                        me._updateMap();
+                    },
+                    error: function(error) {
                         console.log(error);
                     }
                 });
@@ -339,7 +378,7 @@
                         console.log("I think you just pushed a button that does not exist ;)");
                         break;
                     case "delete":
-                        alert("delete");
+                        me.deleteBooking();
                         break;
                     default:
                         console.log("No action named '" + action + "'");

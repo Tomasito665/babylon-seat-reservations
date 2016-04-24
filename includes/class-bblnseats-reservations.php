@@ -60,6 +60,7 @@ class BBLNSeats_Reservations
         add_action('wp_ajax_bblnseats_getConcertList', array($this, 'getConcertList'));
         add_action('wp_ajax_bblnseats_getUser', array($this, 'getUser'));
         add_action('wp_ajax_bblnseats_newBookingToDb', array($this, 'newBookingToDb'));
+        add_action('wp_ajax_bblnseats_deleteBooking', array($this, 'deleteBooking'));
 
         // Load Bootstrap
         $bootstrap_dir = $this->parent->assets_url . 'bootstrap';
@@ -461,6 +462,59 @@ class BBLNSeats_Reservations
           AND   concert_id=$concertID");
 
         return wp_send_json_success($seatRow);
+    }
+
+    public function deleteBooking() {
+        global $wpdb;
+        $databasePrefix = BBLNSeats::instance()->database_prefix;
+        $seatsTable     = $databasePrefix . DatabaseType::SEATS;
+        $usersTable     = $databasePrefix . DatabaseType::USERS;
+
+        $concertID  = (int) $_POST['concert_id'];
+        $section    = (int) $_POST['section'];
+        $row        = (int) $_POST['row'];
+        $seatNo     = (int) $_POST['seat_no'];
+
+        $userName   = $_POST['user_name'];
+
+        // Retrieve user id
+        $userID = (int) $wpdb->get_var("
+            SELECT user_id FROM $seatsTable 
+            WHERE section=$section
+            AND   row=$row
+            AND   seat_no=$seatNo
+            AND   concert_id=$concertID");
+
+        // Retrieve booking id
+        $bookingID = $wpdb->get_var("
+            SELECT id FROM $seatsTable
+            WHERE section=$section
+            AND   row=$row
+            AND   seat_no=$seatNo
+            AND   concert_id=$concertID
+            AND   user_id=$userID
+        ");
+
+        // Delete booking
+        $wpdb->delete($seatsTable,
+            array(
+                'id' => $bookingID
+            ),
+            array('%d')
+        );
+
+        // Check if user can be removed safely
+        $userOccurences = count($wpdb->get_results("SELECT * FROM $seatsTable WHERE user_id=$userID"));
+
+        if ($userOccurences === 0) {
+            $wpdb->delete(
+                $usersTable,
+                array('id' => $userID),
+                array('%d')
+            );
+        }
+
+        return wp_send_json_success($bookingID);
     }
 
     public function getUser() {
