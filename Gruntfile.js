@@ -91,6 +91,21 @@ module.exports = function( grunt ){
 			}
 		},
 
+		// Make the Bootstrap plugin zip file
+		compress: {
+			main: {
+				options: {
+					archive: 'bblnseats.zip'
+				},
+				files: [
+					{src: ['assets/**'], dest: './'},
+					{src: ['includes/**'], dest: './'},
+					{src: ['lang/**'], dest: './'},
+					{src: ['bblnseats.php'], dest: './'},
+					{src: ['index.php'], dest: './'}
+				]
+			}
+		}
 	});
 
 	// Load NPM tasks to be used here
@@ -99,6 +114,7 @@ module.exports = function( grunt ){
 	grunt.loadNpmTasks( 'grunt-contrib-uglify' );
 	grunt.loadNpmTasks( 'grunt-contrib-watch' );
 	grunt.loadNpmTasks( 'grunt-contrib-copy' );
+	grunt.loadNpmTasks( 'grunt-contrib-compress' );
 
 	// Register tasks
 	grunt.registerTask( 'default', [
@@ -108,4 +124,11 @@ module.exports = function( grunt ){
 		'uglify'
 	]);
 
+	grunt.registerTask( 'build', [
+		'copy',
+		'less',
+		'cssmin',
+		'uglify',
+		'compress'
+	]);
 };
